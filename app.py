@@ -35,21 +35,26 @@ class NovelState(TypedDict):
 # ① 執筆ノード
 def write_node(state: NovelState):
     prompt = f"""
-    あなたは小説家です。
+    あなたは小説家です。以下の設定に従い、小説の続きを執筆してください。
 
-    世界観:
+    # 世界観:
     {state['world']}
 
-    キャラクター:
+    # キャラクター:
     {state['characters']}
 
-    ストーリー:
+    # ストーリー:
     {state['plot']}
 
-    現在の文章:
+    # 現在の文章:
     {state['text']}
 
-    続きを執筆してください。
+    # 制約
+    * 出力は小説本文のみ
+    * 解説、メタ発言、コメントは禁止
+    * 「続きは〜」などの説明は禁止
+
+    続きを自然につながる形で執筆してください
     """
     res = llm.invoke(prompt)
     text = state["text"]
@@ -64,10 +69,14 @@ def write_node(state: NovelState):
 # ② 校正ノード
 def review_node(state: NovelState):
     prompt = f"""
-    以下の小説を批評してください。
-    改善点を具体的に指摘してください。
+    以下の小説を批評してください。改善点を具体的に指摘してください。
 
+    # 批評対象の文章
     {state['text']}
+
+    # 出力形式（厳守）
+    * 改善点:
+    * 修正方針:
     """
     res = llm.invoke(prompt)
     review_content = res.content
@@ -80,13 +89,22 @@ def review_node(state: NovelState):
 # ③ 修正ノード
 def revise_node(state: NovelState):
     prompt = f"""
-    以下の小説を改善してください。
+    あなたはプロの編集者です。以下の小説を改善してください。
 
-    小説:
+    # 小説
     {state['text']}
 
-    改善点:
+    # 改善指示
     {state['review']}
+
+    # 制約（重要）
+    * 全文を書き直すこと
+    * 「続きを書く」は禁止
+    * 既存の内容をベースに改善する
+    * 解説やコメントは一切出力しない
+    * 出力は小説本文のみ
+
+    改善済みの全文を出力してください。
     """
     res = llm.invoke(prompt)
     revise_content = res.content
@@ -106,10 +124,7 @@ def judge_node(state: NovelState):
     print(f"Current Count: {current_text_length}, limit={max_text_length}")
 
     next_state = "end"
-    if state["loop_count"] <= 1:
-        # 必ず1回は修正ループを回す
-        next_state = "continue"
-    elif state["loop_count"] >= 4:
+    if state["loop_count"] >= 3:
         next_state = "end"
     elif current_text_length < max_text_length:
         next_state = "continue"
