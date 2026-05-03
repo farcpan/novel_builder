@@ -178,19 +178,26 @@ def main(world, characters, plot, text, target_length):
 
 
 if __name__ == '__main__':
-    world = """
-    魔法と機械が共存する世界
-    """
+    in_path_dir = input("Input the parent directory full path: ")
+    settings_file_path = os.path.join(in_path_dir, "settings.md")
+    characters_file_path = os.path.join(in_path_dir, "characters.md")
+    plot_file_path = os.path.join(in_path_dir, "plot.md")
 
-    characters = """
-    若い魔法技師の少女とAIロボット
-    """
+    with open(settings_file_path, "r", encoding="utf-8") as f:
+        world = f.read()
 
-    plot = """
-    失われた古代兵器を巡る冒険
-    """
+    with open(characters_file_path, "r", encoding="utf-8") as f:
+        characters = f.read()
+
+    with open(plot_file_path, "r", encoding="utf-8") as f:
+        plot = f.read()
 
     text = ""
     target_length = 1500
+
+    print("*** First Settings: ***")
+    print(world)
+    print(characters)
+    print(plot)
 
     main(world=world, characters=characters, plot=plot, text=text, target_length=target_length)
